@@ -1,0 +1,31 @@
+{
+  "_source": "Shape of the SolaX Cloud getRealtimeInfo.do answer (SolaX Cloud API documentation, the fields read by evcc and the Home Assistant community sensors); values and serial numbers invented.",
+  "success": true,
+  "exception": "Query success!",
+  "result": {
+    "inverterSN": "H34TESTCLOUD01",
+    "sn": "SCLOUD0001",
+    "acpower": 2450.0,
+    "yieldtoday": 12.4,
+    "yieldtotal": 8231.7,
+    "feedinpower": 830.0,
+    "feedinenergy": 2051.33,
+    "consumeenergy": 3410.92,
+    "feedinpowerM2": 0.0,
+    "soc": 86.0,
+    "peps1": 0.0,
+    "peps2": null,
+    "peps3": null,
+    "inverterType": "14",
+    "inverterStatus": "102",
+    "uploadTime": "2026-10-15 13:40:12",
+    "batPower": 640.0,
+    "powerdc1": 1830.0,
+    "powerdc2": 1290.0,
+    "powerdc3": null,
+    "powerdc4": null,
+    "batStatus": "0",
+    "utcDateTime": "2026-10-15T11:40:12Z"
+  },
+  "code": 0
+}

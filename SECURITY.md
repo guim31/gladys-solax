@@ -30,6 +30,26 @@ Gladys before reporting a problem.
 
 In scope: the code of this repository and the Docker image it publishes.
 
+What the integration handles:
+
+- **Secrets**: the registration numbers of the dongles (the password of their
+  local interface) and the SolaX Cloud API token live in the Gladys
+  configuration only. They are never written to `/data` and never logged; the
+  logs and the "Test the connection" report show the last four characters of a
+  serial number at most. The cloud token travels in the query string of the
+  SolaX Cloud API (it offers nothing else), over HTTPS.
+- **`/data`** (`solax-state.json`): per configured source, the request variant
+  the dongle answers, the model, the features shown, the rated power, the
+  firmware version and the inverter serial number; the last value of each
+  cumulative counter. No secret.
+- **Network**: plain HTTP to the dongles on the local network (port 80, the
+  only protocol the dongles offer), and HTTPS to `www.solaxcloud.com` when the
+  cloud option is configured. The integration only ever sends
+  `ReadRealTimeData`: nothing is written to the inverter.
+- When a dongle does not report the inverter serial number, the device
+  external id uses the dongle's registration number, which is then visible in
+  Gladys.
+
 Out of scope: Gladys Assistant itself (see its
 [security policy](https://github.com/GladysAssistant/Gladys/security/policy)),
-and the third-party services and devices the integration talks to.
+the SolaX dongles, inverters and cloud the integration talks to.

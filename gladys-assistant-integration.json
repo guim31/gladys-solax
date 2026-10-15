@@ -1,177 +1,793 @@
 {
   "manifest_version": 1,
   "type": "device",
-  "name": "Demo Devices Template",
+  "name": "SolaX Power",
   "description": {
-    "en": "Starter template showing sensors, a switch, a dimmable light and a smart plug.",
-    "fr": "Template de démarrage : capteurs, interrupteur, lampe variable et prise connectée."
+    "en": "SolaX inverters over the local Wi-Fi dongle: solar production, grid, battery, energy counters.",
+    "fr": "Onduleurs SolaX par la clé Wi-Fi en local : production solaire, réseau, batterie, compteurs.",
+    "de": "SolaX-Wechselrichter über den lokalen WLAN-Dongle: Solarproduktion, Netz, Batterie, Zähler.",
+    "es": "Inversores SolaX mediante el dongle Wi-Fi local: producción solar, red, batería, contadores."
   },
   "version": "1.0.0",
-  "docker_image": "ghcr.io/gladysassistant/integration-template-js:1.0.0",
+  "docker_image": "ghcr.io/guim31/gladys-solax:1.0.0",
   "gladys_version": ">=5.1.0",
-  "cover_image": "https://raw.githubusercontent.com/GladysAssistant/integration-template-js/master/cover.png",
-  "categories": ["lighting", "security", "environment"],
-  "transports": ["local", "cloud"],
+  "cover_image": "https://raw.githubusercontent.com/guim31/gladys-solax/main/cover.png",
+  "categories": ["energy"],
+  "transports": ["local"],
   "config_schema": [
     {
       "key": "intro",
       "type": "section",
-      "label": { "en": "Getting started", "fr": "Pour commencer" },
+      "label": {
+        "en": "Local connection",
+        "fr": "Connexion locale",
+        "de": "Lokale Verbindung",
+        "es": "Conexión local"
+      },
       "description": {
-        "en": "The demo weather station reads real data from the free Open-Meteo API: pick the coordinates to observe. No account, no API key.",
-        "fr": "La station météo de démonstration lit de vraies données via l'API gratuite Open-Meteo : choisissez les coordonnées à observer. Pas de compte, pas de clé d'API."
+        "en": "Gladys reads the inverter through its SolaX Wi-Fi or LAN dongle (Pocket WiFi), on the local network. Give the dongle a fixed IP address in your router. Read only: nothing is ever changed on the inverter.",
+        "fr": "Gladys lit l'onduleur par sa clé Wi-Fi ou LAN SolaX (Pocket WiFi), sur le réseau local. Donnez à la clé une adresse IP fixe dans votre box. Lecture seule : rien n'est jamais modifié sur l'onduleur.",
+        "de": "Gladys liest den Wechselrichter über seinen SolaX-WLAN- oder LAN-Dongle (Pocket WiFi) im lokalen Netzwerk. Gib dem Dongle in deinem Router eine feste IP-Adresse. Nur lesend: Am Wechselrichter wird nie etwas geändert.",
+        "es": "Gladys lee el inversor a través de su dongle Wi-Fi o LAN de SolaX (Pocket WiFi), en la red local. Asigne al dongle una dirección IP fija en su router. Solo lectura: nunca se modifica nada en el inversor."
       },
       "links": [
         {
-          "url": "https://open-meteo.com/en/docs",
-          "label": { "en": "Open-Meteo documentation", "fr": "Documentation Open-Meteo" }
+          "url": "https://github.com/guim31/gladys-solax/blob/main/docs/en.md",
+          "label": {
+            "en": "Setup guide",
+            "fr": "Guide d'installation",
+            "de": "Installationsanleitung",
+            "es": "Guía de instalación"
+          }
         }
       ]
     },
     {
-      "key": "latitude",
-      "type": "number",
-      "label": { "en": "Latitude", "fr": "Latitude" },
-      "description": {
-        "en": "Latitude used for the demo weather sensor.",
-        "fr": "Latitude utilisée par le capteur météo de démonstration."
+      "key": "hosts",
+      "type": "string",
+      "label": {
+        "en": "Dongle IP addresses",
+        "fr": "Adresses IP des clés",
+        "de": "IP-Adressen der Dongles",
+        "es": "Direcciones IP de los dongles"
       },
-      "placeholder": { "en": "e.g. 48.8566", "fr": "ex. 48.8566" },
-      "required": true,
-      "default": 48.8566,
-      "min": -90,
-      "max": 90
-    },
-    {
-      "key": "longitude",
-      "type": "number",
-      "label": { "en": "Longitude", "fr": "Longitude" },
       "description": {
-        "en": "Longitude used for the demo weather sensor.",
-        "fr": "Longitude utilisée par le capteur météo de démonstration."
+        "en": "One address per inverter, separated by commas.",
+        "fr": "Une adresse par onduleur, séparées par des virgules.",
+        "de": "Eine Adresse pro Wechselrichter, durch Kommas getrennt.",
+        "es": "Una dirección por inversor, separadas por comas."
       },
-      "placeholder": { "en": "e.g. 2.3522", "fr": "ex. 2.3522" },
-      "required": true,
-      "default": 2.3522,
-      "min": -180,
-      "max": 180
-    },
-    {
-      "key": "unit",
-      "type": "select",
-      "label": { "en": "Temperature unit", "fr": "Unité de température" },
+      "placeholder": {
+        "en": "e.g. 192.0.2.10",
+        "fr": "ex. 192.0.2.10",
+        "de": "z. B. 192.0.2.10",
+        "es": "p. ej. 192.0.2.10"
+      },
       "required": false,
-      "default": "celsius",
+      "default": ""
+    },
+    {
+      "key": "passwords",
+      "type": "secret",
+      "label": {
+        "en": "Dongle passwords",
+        "fr": "Mots de passe des clés",
+        "de": "Passwörter der Dongles",
+        "es": "Contraseñas de los dongles"
+      },
+      "description": {
+        "en": "The registration number printed on each dongle (10 characters), in the same order as the addresses. Leave empty for the old firmwares.",
+        "fr": "Le numéro d'enregistrement imprimé sur chaque clé (10 caractères), dans l'ordre des adresses. Laissez vide pour les anciens firmwares.",
+        "de": "Die auf jedem Dongle aufgedruckte Registriernummer (10 Zeichen), in der Reihenfolge der Adressen. Für alte Firmwares leer lassen.",
+        "es": "El número de registro impreso en cada dongle (10 caracteres), en el mismo orden que las direcciones. Déjelo vacío en los firmwares antiguos."
+      },
+      "required": false
+    },
+    {
+      "key": "model",
+      "type": "select",
+      "label": {
+        "en": "Inverter model",
+        "fr": "Modèle d'onduleur",
+        "de": "Wechselrichtermodell",
+        "es": "Modelo de inversor"
+      },
+      "description": {
+        "en": "Detected automatically. Force it only if the readings look wrong.",
+        "fr": "Détecté automatiquement. Ne le forcez que si les mesures semblent fausses.",
+        "de": "Wird automatisch erkannt. Erzwinge es nur, wenn die Messwerte falsch wirken.",
+        "es": "Se detecta automáticamente. Fuércelo solo si las medidas parecen incorrectas."
+      },
+      "required": false,
+      "default": "auto",
       "options": [
-        { "value": "celsius", "label": { "en": "Celsius", "fr": "Celsius" } },
-        { "value": "fahrenheit", "label": { "en": "Fahrenheit", "fr": "Fahrenheit" } }
+        {
+          "value": "auto",
+          "label": {
+            "en": "Automatic",
+            "fr": "Automatique",
+            "de": "Automatisch",
+            "es": "Automático"
+          }
+        },
+        {
+          "value": "x_hybrid",
+          "label": {
+            "en": "X-Hybrid",
+            "fr": "X-Hybrid",
+            "de": "X-Hybrid",
+            "es": "X-Hybrid"
+          }
+        },
+        {
+          "value": "x1_mini_g3",
+          "label": {
+            "en": "X1-Mini",
+            "fr": "X1-Mini",
+            "de": "X1-Mini",
+            "es": "X1-Mini"
+          }
+        },
+        {
+          "value": "x1_g3",
+          "label": {
+            "en": "X1",
+            "fr": "X1",
+            "de": "X1",
+            "es": "X1"
+          }
+        },
+        {
+          "value": "x3_g3",
+          "label": {
+            "en": "X3",
+            "fr": "X3",
+            "de": "X3",
+            "es": "X3"
+          }
+        },
+        {
+          "value": "x1_boost",
+          "label": {
+            "en": "X1-Boost / Mini",
+            "fr": "X1-Boost / Mini",
+            "de": "X1-Boost / Mini",
+            "es": "X1-Boost / Mini"
+          }
+        },
+        {
+          "value": "x3_hybrid_g3",
+          "label": {
+            "en": "X3-Hybrid G3",
+            "fr": "X3-Hybrid G3",
+            "de": "X3-Hybrid G3",
+            "es": "X3-Hybrid G3"
+          }
+        },
+        {
+          "value": "x1_smart",
+          "label": {
+            "en": "X1-Smart",
+            "fr": "X1-Smart",
+            "de": "X1-Smart",
+            "es": "X1-Smart"
+          }
+        },
+        {
+          "value": "x3_hybrid_g4",
+          "label": {
+            "en": "X3-Hybrid G4",
+            "fr": "X3-Hybrid G4",
+            "de": "X3-Hybrid G4",
+            "es": "X3-Hybrid G4"
+          }
+        },
+        {
+          "value": "x1_hybrid_g4",
+          "label": {
+            "en": "X1-Hybrid G4",
+            "fr": "X1-Hybrid G4",
+            "de": "X1-Hybrid G4",
+            "es": "X1-Hybrid G4"
+          }
+        },
+        {
+          "value": "x3_mic_pro_g2",
+          "label": {
+            "en": "X3-MIC PRO G2",
+            "fr": "X3-MIC PRO G2",
+            "de": "X3-MIC PRO G2",
+            "es": "X3-MIC PRO G2"
+          }
+        },
+        {
+          "value": "x1_g4",
+          "label": {
+            "en": "X1-Boost / Mini G4",
+            "fr": "X1-Boost / Mini G4",
+            "de": "X1-Boost / Mini G4",
+            "es": "X1-Boost / Mini G4"
+          }
+        },
+        {
+          "value": "x3_ultra",
+          "label": {
+            "en": "X3-Ultra",
+            "fr": "X3-Ultra",
+            "de": "X3-Ultra",
+            "es": "X3-Ultra"
+          }
+        },
+        {
+          "value": "x1_lite_lv",
+          "label": {
+            "en": "X1-Lite LV",
+            "fr": "X1-Lite LV",
+            "de": "X1-Lite LV",
+            "es": "X1-Lite LV"
+          }
+        }
       ]
     },
     {
-      "key": "poll_frequency",
-      "type": "number",
-      "label": { "en": "Refresh interval (s)", "fr": "Intervalle de rafraîchissement (s)" },
-      "description": {
-        "en": "How often sensors are polled, in seconds (one minute minimum).",
-        "fr": "Fréquence d'interrogation des capteurs, en secondes (une minute minimum)."
+      "key": "local_interval",
+      "type": "select",
+      "label": {
+        "en": "Local refresh",
+        "fr": "Rafraîchissement local",
+        "de": "Lokale Aktualisierung",
+        "es": "Actualización local"
       },
       "required": false,
-      "default": 300,
-      "min": 60,
-      "max": 3600
+      "default": "30",
+      "options": [
+        {
+          "value": "10",
+          "label": {
+            "en": "Every 10 s",
+            "fr": "Toutes les 10 s",
+            "de": "Alle 10 s",
+            "es": "Cada 10 s"
+          }
+        },
+        {
+          "value": "15",
+          "label": {
+            "en": "Every 15 s",
+            "fr": "Toutes les 15 s",
+            "de": "Alle 15 s",
+            "es": "Cada 15 s"
+          }
+        },
+        {
+          "value": "30",
+          "label": {
+            "en": "Every 30 s",
+            "fr": "Toutes les 30 s",
+            "de": "Alle 30 s",
+            "es": "Cada 30 s"
+          }
+        },
+        {
+          "value": "60",
+          "label": {
+            "en": "Every 60 s",
+            "fr": "Toutes les 60 s",
+            "de": "Alle 60 s",
+            "es": "Cada 60 s"
+          }
+        }
+      ]
+    },
+    {
+      "key": "cloud",
+      "type": "section",
+      "label": {
+        "en": "SolaX Cloud (optional)",
+        "fr": "SolaX Cloud (facultatif)",
+        "de": "SolaX Cloud (optional)",
+        "es": "SolaX Cloud (opcional)"
+      },
+      "description": {
+        "en": "Only for the dongles that do not answer locally. The API token is under Service, API on solaxcloud.com. SolaX allows 10 calls a minute and 10,000 a day, and the dongle uploads every 5 minutes: readings are 5 minutes apart at best.",
+        "fr": "Seulement pour les clés qui ne répondent pas en local. Le jeton d'API est dans Service, API sur solaxcloud.com. SolaX autorise 10 appels par minute et 10 000 par jour, et la clé envoie ses données toutes les 5 minutes : une mesure toutes les 5 minutes au mieux.",
+        "de": "Nur für Dongles, die lokal nicht antworten. Das API-Token findest du unter Service, API auf solaxcloud.com. SolaX erlaubt 10 Aufrufe pro Minute und 10.000 pro Tag, und der Dongle sendet alle 5 Minuten: höchstens eine Messung alle 5 Minuten.",
+        "es": "Solo para los dongles que no responden en local. El token de la API está en Service, API de solaxcloud.com. SolaX permite 10 llamadas por minuto y 10 000 al día, y el dongle envía cada 5 minutos: como mucho una medida cada 5 minutos."
+      }
+    },
+    {
+      "key": "cloud_token",
+      "type": "secret",
+      "label": {
+        "en": "SolaX Cloud API token",
+        "fr": "Jeton d'API SolaX Cloud",
+        "de": "SolaX-Cloud-API-Token",
+        "es": "Token de la API de SolaX Cloud"
+      },
+      "required": false
+    },
+    {
+      "key": "cloud_serials",
+      "type": "string",
+      "label": {
+        "en": "Registration numbers",
+        "fr": "Numéros d'enregistrement",
+        "de": "Registriernummern",
+        "es": "Números de registro"
+      },
+      "description": {
+        "en": "The registration number of each dongle to read through SolaX Cloud, separated by commas.",
+        "fr": "Le numéro d'enregistrement de chaque clé à lire par SolaX Cloud, séparés par des virgules.",
+        "de": "Die Registriernummer jedes über SolaX Cloud zu lesenden Dongles, durch Kommas getrennt.",
+        "es": "El número de registro de cada dongle que se leerá mediante SolaX Cloud, separados por comas."
+      },
+      "placeholder": {
+        "en": "e.g. SABCDE1234",
+        "fr": "ex. SABCDE1234",
+        "de": "z. B. SABCDE1234",
+        "es": "p. ej. SABCDE1234"
+      },
+      "required": false,
+      "default": ""
+    },
+    {
+      "key": "cloud_interval",
+      "type": "select",
+      "label": {
+        "en": "Cloud refresh",
+        "fr": "Rafraîchissement cloud",
+        "de": "Cloud-Aktualisierung",
+        "es": "Actualización en la nube"
+      },
+      "required": false,
+      "default": "5",
+      "options": [
+        {
+          "value": "5",
+          "label": {
+            "en": "Every 5 min",
+            "fr": "Toutes les 5 min",
+            "de": "Alle 5 min",
+            "es": "Cada 5 min"
+          }
+        },
+        {
+          "value": "10",
+          "label": {
+            "en": "Every 10 min",
+            "fr": "Toutes les 10 min",
+            "de": "Alle 10 min",
+            "es": "Cada 10 min"
+          }
+        },
+        {
+          "value": "15",
+          "label": {
+            "en": "Every 15 min",
+            "fr": "Toutes les 15 min",
+            "de": "Alle 15 min",
+            "es": "Cada 15 min"
+          }
+        },
+        {
+          "value": "30",
+          "label": {
+            "en": "Every 30 min",
+            "fr": "Toutes les 30 min",
+            "de": "Alle 30 min",
+            "es": "Cada 30 min"
+          }
+        }
+      ]
+    },
+    {
+      "key": "display",
+      "type": "section",
+      "label": {
+        "en": "Display",
+        "fr": "Affichage",
+        "de": "Anzeige",
+        "es": "Visualización"
+      }
+    },
+    {
+      "key": "language",
+      "type": "select",
+      "label": {
+        "en": "Language of the texts",
+        "fr": "Langue des textes",
+        "de": "Sprache der Texte",
+        "es": "Idioma de los textos"
+      },
+      "description": {
+        "en": "Feature names (set when the device is added), inverter state and scene texts.",
+        "fr": "Noms des fonctionnalités (fixés à l'ajout de l'appareil), état de l'onduleur et textes des scènes.",
+        "de": "Namen der Funktionen (beim Hinzufügen des Geräts festgelegt), Wechselrichterzustand und Szenentexte.",
+        "es": "Nombres de las funciones (fijados al añadir el dispositivo), estado del inversor y textos de las escenas."
+      },
+      "required": false,
+      "default": "fr",
+      "options": [
+        {
+          "value": "en",
+          "label": {
+            "en": "English",
+            "fr": "English",
+            "de": "English",
+            "es": "English"
+          }
+        },
+        {
+          "value": "fr",
+          "label": {
+            "en": "Français",
+            "fr": "Français",
+            "de": "Français",
+            "es": "Français"
+          }
+        },
+        {
+          "value": "de",
+          "label": {
+            "en": "Deutsch",
+            "fr": "Deutsch",
+            "de": "Deutsch",
+            "es": "Deutsch"
+          }
+        },
+        {
+          "value": "es",
+          "label": {
+            "en": "Español",
+            "fr": "Español",
+            "de": "Español",
+            "es": "Español"
+          }
+        }
+      ]
     }
   ],
   "actions": [
     {
-      "key": "test_weather",
-      "label": { "en": "Test the weather provider", "fr": "Tester le fournisseur météo" },
-      "timeout_seconds": 30
-    },
-    {
-      "key": "identify",
-      "label": { "en": "Identify a device", "fr": "Identifier un appareil" },
-      "fields": [
-        {
-          "key": "device",
-          "type": "select",
-          "source": "devices",
-          "label": { "en": "Device", "fr": "Appareil" },
-          "required": true
-        }
-      ]
+      "key": "test_connection",
+      "label": {
+        "en": "Test the connection",
+        "fr": "Tester la connexion",
+        "de": "Verbindung testen",
+        "es": "Probar la conexión"
+      },
+      "description": {
+        "en": "Reads every inverter now and tells, for each one, the model found or what went wrong.",
+        "fr": "Lit chaque onduleur maintenant et indique, pour chacun, le modèle trouvé ou ce qui ne va pas.",
+        "de": "Liest jetzt jeden Wechselrichter und zeigt für jeden das gefundene Modell oder was schiefgeht.",
+        "es": "Lee ahora cada inversor e indica, para cada uno, el modelo encontrado o lo que falla."
+      },
+      "timeout_seconds": 120
     }
   ],
   "scene_triggers": [
     {
-      "key": "motion_detected",
-      "label": { "en": "Motion detected", "fr": "Mouvement détecté" },
+      "key": "inverter_status_changed",
+      "label": {
+        "en": "Inverter state changed",
+        "fr": "L'état de l'onduleur a changé",
+        "de": "Wechselrichterzustand geändert",
+        "es": "El estado del inversor ha cambiado"
+      },
       "description": {
-        "en": "A demo motion sensor saw a person or an animal move.",
-        "fr": "Un détecteur de démonstration a vu bouger une personne ou un animal."
+        "en": "The inverter goes to another state: fault, backup (EPS), standby, back to normal...",
+        "fr": "L'onduleur passe dans un autre état : défaut, secours (EPS), veille, retour à la normale...",
+        "de": "Der Wechselrichter wechselt den Zustand: Fehler, Notstrom (EPS), Standby, zurück zu normal...",
+        "es": "El inversor pasa a otro estado: fallo, respaldo (EPS), reposo, vuelta a la normalidad..."
       },
       "fields": [
         {
           "key": "device",
           "type": "select",
           "source": "devices",
-          "label": { "en": "Sensor", "fr": "Détecteur" }
+          "label": {
+            "en": "Inverter",
+            "fr": "Onduleur",
+            "de": "Wechselrichter",
+            "es": "Inversor"
+          }
         },
         {
-          "key": "target",
+          "key": "status",
           "type": "multi_select",
-          "label": { "en": "What moved", "fr": "Ce qui a bougé" },
+          "label": {
+            "en": "New state",
+            "fr": "Nouvel état",
+            "de": "Neuer Zustand",
+            "es": "Nuevo estado"
+          },
           "options": [
-            { "value": "person", "label": { "en": "Person", "fr": "Personne" } },
-            { "value": "animal", "label": { "en": "Animal", "fr": "Animal" } }
+            {
+              "value": "waiting",
+              "label": {
+                "en": "Waiting",
+                "fr": "En attente",
+                "de": "Wartet",
+                "es": "En espera"
+              }
+            },
+            {
+              "value": "checking",
+              "label": {
+                "en": "Checking",
+                "fr": "Vérification",
+                "de": "Prüfung",
+                "es": "Comprobación"
+              }
+            },
+            {
+              "value": "normal",
+              "label": {
+                "en": "Normal",
+                "fr": "Normal",
+                "de": "Normal",
+                "es": "Normal"
+              }
+            },
+            {
+              "value": "fault",
+              "label": {
+                "en": "Fault",
+                "fr": "Défaut",
+                "de": "Fehler",
+                "es": "Fallo"
+              }
+            },
+            {
+              "value": "permanent_fault",
+              "label": {
+                "en": "Permanent fault",
+                "fr": "Défaut permanent",
+                "de": "Dauerhafter Fehler",
+                "es": "Fallo permanente"
+              }
+            },
+            {
+              "value": "updating",
+              "label": {
+                "en": "Updating",
+                "fr": "Mise à jour",
+                "de": "Aktualisierung",
+                "es": "Actualizando"
+              }
+            },
+            {
+              "value": "eps_check",
+              "label": {
+                "en": "Backup check",
+                "fr": "Contrôle secours",
+                "de": "Notstromprüfung",
+                "es": "Comprobación de respaldo"
+              }
+            },
+            {
+              "value": "eps",
+              "label": {
+                "en": "Backup (EPS)",
+                "fr": "Secours (EPS)",
+                "de": "Notstrom (EPS)",
+                "es": "Respaldo (EPS)"
+              }
+            },
+            {
+              "value": "self_test",
+              "label": {
+                "en": "Self-test",
+                "fr": "Autotest",
+                "de": "Selbsttest",
+                "es": "Autodiagnóstico"
+              }
+            },
+            {
+              "value": "idle",
+              "label": {
+                "en": "Idle",
+                "fr": "Inactif",
+                "de": "Leerlauf",
+                "es": "Inactivo"
+              }
+            },
+            {
+              "value": "standby",
+              "label": {
+                "en": "Standby",
+                "fr": "Veille",
+                "de": "Standby",
+                "es": "En reposo"
+              }
+            },
+            {
+              "value": "pv_wake_up_battery",
+              "label": {
+                "en": "PV waking battery",
+                "fr": "Réveil batterie par PV",
+                "de": "PV weckt Batterie",
+                "es": "FV activando batería"
+              }
+            },
+            {
+              "value": "generator_check",
+              "label": {
+                "en": "Generator check",
+                "fr": "Contrôle générateur",
+                "de": "Generatorprüfung",
+                "es": "Comprobación del generador"
+              }
+            },
+            {
+              "value": "generator_run",
+              "label": {
+                "en": "Generator running",
+                "fr": "Générateur en marche",
+                "de": "Generator läuft",
+                "es": "Generador en marcha"
+              }
+            }
           ]
         }
       ],
       "variables": [
         {
-          "key": "target",
+          "key": "status",
           "type": "string",
-          "label": { "en": "What moved", "fr": "Ce qui a bougé" }
+          "label": {
+            "en": "New state (code)",
+            "fr": "Nouvel état (code)",
+            "de": "Neuer Zustand (Code)",
+            "es": "Nuevo estado (código)"
+          }
+        },
+        {
+          "key": "previous_status",
+          "type": "string",
+          "label": {
+            "en": "Previous state (code)",
+            "fr": "État précédent (code)",
+            "de": "Vorheriger Zustand (Code)",
+            "es": "Estado anterior (código)"
+          }
+        },
+        {
+          "key": "status_label",
+          "type": "string",
+          "label": {
+            "en": "New state (text)",
+            "fr": "Nouvel état (texte)",
+            "de": "Neuer Zustand (Text)",
+            "es": "Nuevo estado (texto)"
+          }
         }
       ]
     }
   ],
   "scene_actions": [
     {
-      "key": "identify_device",
-      "label": { "en": "Identify a device", "fr": "Identifier un appareil" },
-      "description": {
-        "en": "Make a device signal itself (the demo light blinks).",
-        "fr": "Fait se signaler un appareil (la lampe de démonstration clignote)."
+      "key": "get_solar_summary",
+      "label": {
+        "en": "Get the solar summary",
+        "fr": "Obtenir le bilan solaire",
+        "de": "Solarbilanz abrufen",
+        "es": "Obtener el balance solar"
       },
-      "timeout_seconds": 15,
+      "description": {
+        "en": "The last reading of an inverter, and a sentence ready to send in a message.",
+        "fr": "La dernière mesure d'un onduleur, et une phrase prête à envoyer dans un message.",
+        "de": "Die letzte Messung eines Wechselrichters und ein Satz, bereit für eine Nachricht.",
+        "es": "La última medida de un inversor y una frase lista para enviar en un mensaje."
+      },
+      "timeout_seconds": 10,
       "fields": [
         {
           "key": "device",
           "type": "select",
           "source": "devices",
-          "label": { "en": "Device", "fr": "Appareil" },
+          "label": {
+            "en": "Inverter",
+            "fr": "Onduleur",
+            "de": "Wechselrichter",
+            "es": "Inversor"
+          },
           "required": true
         }
       ],
       "outputs": [
         {
-          "key": "signalled",
+          "key": "summary",
+          "type": "string",
+          "label": {
+            "en": "Summary sentence",
+            "fr": "Phrase de bilan",
+            "de": "Bilanzsatz",
+            "es": "Frase de balance"
+          }
+        },
+        {
+          "key": "online",
           "type": "boolean",
-          "label": { "en": "Device signalled", "fr": "Appareil signalé" }
+          "label": {
+            "en": "Inverter online",
+            "fr": "Onduleur en ligne",
+            "de": "Wechselrichter online",
+            "es": "Inversor en línea"
+          }
+        },
+        {
+          "key": "pv_power",
+          "type": "number",
+          "label": {
+            "en": "PV power (W)",
+            "fr": "Puissance PV (W)",
+            "de": "PV-Leistung (W)",
+            "es": "Potencia FV (W)"
+          }
+        },
+        {
+          "key": "yield_today",
+          "type": "number",
+          "label": {
+            "en": "Production today (kWh)",
+            "fr": "Production du jour (kWh)",
+            "de": "Produktion heute (kWh)",
+            "es": "Producción de hoy (kWh)"
+          }
+        },
+        {
+          "key": "grid_power",
+          "type": "number",
+          "label": {
+            "en": "Grid power (W, import +)",
+            "fr": "Puissance réseau (W, import +)",
+            "de": "Netzleistung (W, Bezug +)",
+            "es": "Potencia de red (W, importación +)"
+          }
+        },
+        {
+          "key": "battery_level",
+          "type": "number",
+          "label": {
+            "en": "Battery level (%)",
+            "fr": "Niveau de batterie (%)",
+            "de": "Batteriestand (%)",
+            "es": "Nivel de batería (%)"
+          }
         }
       ]
     }
   ],
   "widgets": [
     {
-      "key": "demo_status",
-      "label": { "en": "Demo status", "fr": "État de la démo" },
-      "description": {
-        "en": "Live temperature and plug power, plug connection and observed location.",
-        "fr": "Température et puissance en direct, connexion de la prise, position observée."
+      "key": "solar_overview",
+      "label": {
+        "en": "Solar overview",
+        "fr": "Vue solaire",
+        "de": "Solarübersicht",
+        "es": "Vista solar"
       },
-      "icon": "activity",
-      "action_timeout_seconds": 15
+      "description": {
+        "en": "Production, grid exchange and battery of a SolaX inverter, with the 24-hour curve.",
+        "fr": "Production, échange réseau et batterie d'un onduleur SolaX, avec la courbe sur 24 h.",
+        "de": "Produktion, Netzaustausch und Batterie eines SolaX-Wechselrichters, mit 24-h-Kurve.",
+        "es": "Producción, intercambio con la red y batería de un inversor SolaX, con la curva de 24 h."
+      },
+      "icon": "sun",
+      "settings": [
+        {
+          "key": "device",
+          "type": "select",
+          "source": "devices",
+          "label": {
+            "en": "Inverter",
+            "fr": "Onduleur",
+            "de": "Wechselrichter",
+            "es": "Inversor"
+          }
+        }
+      ]
     }
   ]
 }

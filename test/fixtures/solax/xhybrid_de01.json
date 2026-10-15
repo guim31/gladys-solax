@@ -1,0 +1,51 @@
+{
+  "_source": "squishykid/solax (MIT) tests/samples/responses.py XHYBRID_DE01_RESPONSE; serial numbers invented",
+  "library_model": "XHybrid",
+  "request": {
+    "uri": "/api/realTimeData.htm",
+    "method": "GET",
+    "query": null,
+    "data": null,
+    "headers": null
+  },
+  "response": {
+    "method": "uploadsn",
+    "version": "Solax_SI_CH_2nd_20160912_DE02",
+    "type": "AL_SE",
+    "SN": "TEST00001",
+    "Data": [
+      0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25,
+      26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48,
+      49, 50, 51, 52, 53, 54, 55, 56, 57
+    ],
+    "Status": 2
+  },
+  "library_values": {
+    "Today's Energy": 8.0,
+    "Battery Current": 14.0,
+    "Month's Energy": 19.0,
+    "Battery Power": 15,
+    "Battery Remaining Capacity": 17,
+    "Battery Temperature": 16,
+    "Battery Voltage": 13,
+    "EPS Current": 54,
+    "EPS Frequency": 56,
+    "EPS Power": 55,
+    "EPS Voltage": 53,
+    "Exported Power": 10,
+    "Grid Frequency": 50,
+    "Inverter Temperature": 7,
+    "Network Voltage": 5,
+    "Output Current": 4,
+    "PV1 Current": 0,
+    "PV1 Power": 11,
+    "PV1 Voltage": 2,
+    "PV2 Current": 1,
+    "PV2 Power": 12,
+    "PV2 Voltage": 3,
+    "Power Now": 6,
+    "Total Energy": 9,
+    "Grid Exported Energy": 41,
+    "Grid Imported Energy": 42
+  }
+}

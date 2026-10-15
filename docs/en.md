@@ -1,61 +1,142 @@
-# Demo Devices Template
+# SolaX Power
 
-This is the user documentation of the integration. Gladys re-hosts this file
-and shows a permanent **Documentation** link to it in the Configuration screen
-(in the user's language, with English as the fallback) — it is when
-configuring that the user needs it most. Keep the short onboarding hints in
-the `section` blocks of the manifest `config_schema`; put the long
-step-by-step (screenshots, troubleshooting…) here.
+## Overview
 
-## What you get
+This integration reads your **SolaX inverters** (X1, X3, X-Hybrid, Boost, Mini, Smart, Hybrid
+G3/G4, Ultra, MIC PRO, Lite LV, and the Qcells Q.VOLT rebrand) **on your local network**,
+through the inverter's Wi-Fi or LAN dongle (Pocket WiFi). Each inverter becomes one Gladys device
+with its solar production, its energy counters, the grid exchange, the battery of the hybrids and
+the inverter state. **SolaX Cloud** is an option for the dongles that do not answer locally.
 
-Six demo devices show up after installation: a weather station (real data
-from Open-Meteo), a switch, a dimmable light, a smart plug with power
-metering, a motion sensor and a camera.
+It is **read only**: the integration never sends anything to the inverter but a request for its
+realtime data.
+
+> **Developed without the hardware: feedback welcome.** The decoding follows the real answers
+> published with the `solax` library used by Home Assistant, but it was never run against a real
+> inverter. Report what you see on the Gladys forum or in the GitHub issues.
+
+This integration is not affiliated with SolaX Power.
+
+## Requirements
+
+- Gladys Assistant **5.1.0** or later (5.2 for the energy tracking of the production index).
+- A SolaX inverter with its **Pocket WiFi** (V2 or V3) or **Pocket LAN** dongle, connected to the
+  same network as Gladys. Give the dongle a **fixed IP address** in your router.
+- The dongle's **registration number** (10 characters, printed on the dongle, also shown in the
+  SolaX Cloud app): recent firmwares use it as the password of the local interface.
+- For SolaX Cloud only: an account on solaxcloud.com and its **API token** (Service → API on the
+  new site, Support → Third-party ecology on the old one).
 
 ## Configuration
 
-1. Open the **Configuration** tab of the integration.
-2. Set the **latitude** and **longitude** the demo weather station should
-   observe (they default to Paris), and pick your temperature unit.
-   The **refresh interval** sets how often the weather station and the
-   plug's power are read: every 5 minutes by default, every minute at most.
-3. Save: the devices appear in the **Discovery** tab, ready to be added.
+Open **Integrations → SolaX Power → Configuration**:
 
-The **Prefer the local connection** toggle drives the demo plug: it reports
-the channel it actually uses as a badge (local or cloud), with an orange dot
-when it runs degraded (local refused, cloud fallback).
+| Field                 | What to enter                                                                                                              |
+| --------------------- | -------------------------------------------------------------------------------------------------------------------------- |
+| Dongle IP addresses   | One address per inverter, separated by commas (`192.0.2.10, 192.0.2.11`). A port can be given (`192.0.2.10:8080`).         |
+| Dongle passwords      | The registration number of each dongle, in the same order. One value applies to every dongle. Empty for the old firmwares. |
+| Inverter model        | **Automatic** (recommended): the model is detected from the dongle's answer. Force it only if the readings look wrong.     |
+| Local refresh         | Every 10, 15, 30 (default) or 60 seconds.                                                                                  |
+| SolaX Cloud API token | Only for the cloud option.                                                                                                 |
+| Registration numbers  | The registration number of each dongle to read through SolaX Cloud, separated by commas.                                   |
+| Cloud refresh         | Every 5 (default), 10, 15 or 30 minutes.                                                                                   |
+| Language of the texts | Feature names (frozen when the device is added), inverter state, scene texts. French by default.                           |
 
-## Actions
+Then click **Test the connection**: for each inverter, it tells the model found, or what went
+wrong. The inverters found appear in the **Discovery** tab: add them to Gladys.
 
-- **Test the weather provider** — performs a live request to Open-Meteo and
-  shows the current temperature and humidity under the button.
-- **Identify a device** — pick one of your devices in the list and it will
-  signal itself (the demo light "blinks" in the logs).
+**SolaX Cloud quota.** SolaX allows **10 calls per minute and 10,000 per day** per token, and the
+dongle uploads its data every 5 minutes. The integration therefore reads each cloud inverter every
+**5 minutes at most**, spaces its calls by 6.5 seconds (never more than 10 a minute, whatever the
+number of inverters), and stretches the period when the inverters would exceed 9,000 calls a day.
+An inverter configured both locally and in the cloud is read locally only.
 
-## Scenes
+## What each device shows
 
-The integration adds its own cards to the scene editor (Gladys 5.1 or
-later), under the **Integrations** category:
+One device per inverter, named `SolaX <model> <end of the serial number>`. The features depend
+on what the model reports; a feature never disappears once shown.
 
-- **Motion detected** (trigger) — starts the scene when a demo motion sensor
-  sees something move. Optionally pick the sensor and what moved (person,
-  animal); left empty, any detection matches. The following actions can
-  read what moved with `{{triggerEvent.data.target}}`.
-- **Identify a device** (action) — makes the chosen device signal itself.
-  It returns whether the device could signal itself, so the following
-  actions can depend on it.
+| Feature                               | Gladys type                   | Notes                                                                 |
+| ------------------------------------- | ----------------------------- | --------------------------------------------------------------------- |
+| PV power                              | production power (W)          | Sum of the strings.                                                   |
+| PV string 1, 2, 3 power               | production power (W)          | When the inverter has several strings.                                |
+| Production today                      | daily production (kWh)        | Reset by the inverter at midnight.                                    |
+| Total production                      | production index (kWh)        | The cumulative counter of the energy tracking. Never published lower. |
+| AC output power                       | power (W)                     | Negative on a hybrid charging its battery from the grid.              |
+| Grid (import +, export −)             | grid power (W)                | Needs the SolaX meter (CT). Positive when importing.                  |
+| Grid import index, grid export index  | grid indexes (kWh)            | The meter's counters.                                                 |
+| Battery level                         | battery level (%)             | Hybrids.                                                              |
+| Battery charge power, discharge power | battery storage (W)           | One of them is 0 at any time.                                         |
+| Battery temperature                   | device temperature (°C)       | When reported.                                                        |
+| Battery charge index, discharge index | battery storage indexes (kWh) | When reported.                                                        |
+| Inverter temperature                  | device temperature (°C)       | When reported.                                                        |
+| Inverter state                        | text                          | Normal, Waiting, Fault, Backup (EPS), Standby... When reported.       |
+| Online                                | binary                        | 0 when the dongle does not answer (at night for most inverters).      |
 
-## Dashboard
+The device badge shows **local**, **cloud** or **unreachable**. Values are only sent to Gladys
+when they change, and at least every 6 hours when they do not.
 
-Add the **Demo status** widget to a dashboard: it shows the live
-temperature of the weather station and the power of the office plug, the
-connection the plug currently uses (orange when degraded) and the observed
-location. Its **Identify the light** button makes the demo light signal
-itself.
+## Widget
+
+**Solar overview** (dashboard → add a widget → SolaX Power): the PV power, today's production,
+the grid exchange and the battery as live tiles, the 24-hour curve of production and grid, and a
+short list: exporting or importing, charging or discharging, inverter state, time of the last
+reading. Choose the inverter in the widget settings (not needed when there is only one).
+
+## Scene trigger
+
+**Inverter state changed**: fires when the inverter goes to another state (for example from
+Normal to Fault, or to Backup (EPS) during a power cut). Filters: the inverter, and the new
+states that interest you. Variables: `status` (code: `normal`, `fault`, `eps`...),
+`previous_status`, `status_label` (the state in the language of the configuration). Only the
+models that report a state can fire it (X3 Hybrid G4, X3 Ultra, X3 MIC PRO G2, and every
+inverter read through SolaX Cloud).
+
+## Scene action
+
+**Get the solar summary**: returns the last reading of an inverter without asking the dongle
+again: `summary` (a sentence such as "Solar: 3.1 kW now, 12.4 kWh today. Grid: exporting 830 W.
+Battery: 86 %."), `online`, `pv_power`, `yield_today`, `grid_power`, `battery_level`.
+
+## Scene examples
+
+- **Evening report**: every day at 21:00 → Get the solar summary → send a message with
+  `{{summary}}`.
+- **Inverter fault**: Inverter state changed, new state Fault or Permanent fault → send a
+  notification "The inverter is in fault: {{status_label}}".
+- **Use the surplus**: when Grid (import +, export −) goes below −1500 W → switch on
+  the water heater plug; switch it off when it goes above 0 W.
+- **Power cut**: Inverter state changed, new state Backup (EPS) → turn off the non-essential
+  appliances and warn the household.
+
+## Supported models
+
+Detected from the `type` the dongle reports: X-Hybrid (first generation), X1/X3 G3 (Hybrid, Fit,
+MIC, Air, Boost, Mini), X1-Boost/Mini (types 4, 18, 22), X1-Smart, X1-Hybrid G4, X3-Hybrid G3 on
+firmware 2.034, X3-Hybrid G4 and Q.VOLT HYB-G3-3P, X3-MIC PRO G2, X3-Ultra, X1-Lite LV. The X3-EVC
+charging station is not an inverter and is refused.
 
 ## Troubleshooting
 
-The integration logs everything it does: check the integration logs from the
-Gladys UI (or `docker logs` on the host) with `LOG_LEVEL=debug` for the full
-detail.
+- **"No answer"**: check the address, that Gladys and the dongle are on the same network, and
+  that the dongle is powered: most inverters switch the dongle off at night, the device then shows
+  Offline until morning.
+- **"Refused: check the password"**: enter the registration number of the dongle (not the serial
+  number of the inverter).
+- **"Model not recognized"**: open an issue with the output of
+  `node scripts/probe.mjs <address> [registration number]` (read only; the registration number is
+  masked in the output).
+- **Wrong values**: force the model in the configuration, and report it.
+- **Firmware 2.034 and later**: some dongles refuse the local network. The integration sends the
+  header these firmwares expect; if it still fails, use SolaX Cloud.
+- More details in the logs: set `LOG_LEVEL=debug` on the integration.
+
+## Limits
+
+- Read only: no setting of the inverter (work mode, charge, export limit) is changed, on purpose.
+- Some dongles do not answer locally at all: use SolaX Cloud, refreshed every 5 minutes at best.
+- The grid values need the SolaX meter; without it they stay at 0.
+- The thirty-minute production of the Gladys energy dashboard is derived by the core from the
+  production index; Gladys 5.2.1 does not link it automatically for external integrations yet.
+- The meaning of some registers comes from the community, not from SolaX: a model not seen in
+  the samples may read some values wrong.

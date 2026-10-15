@@ -1,0 +1,52 @@
+{
+  "_source": "squishykid/solax (MIT) tests/samples/responses.py X3_MICPRO_G2_RESPONSE; serial numbers invented",
+  "library_model": "X3MicProG2",
+  "request": {
+    "uri": "/",
+    "method": "POST",
+    "query": null,
+    "data": "optType=ReadRealTimeData",
+    "headers": null
+  },
+  "response": {
+    "sn": "SRETEST000",
+    "ver": "3.008.10",
+    "type": 16,
+    "Data": [
+      2371, 2345, 2378, 41, 41, 41, 1018, 992, 970, 1741, 1745, 0, 88, 87, 0, 1544, 1531, 0, 4998,
+      4999, 4994, 2, 7957, 0, 200, 4000, 57, 43, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+      0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2707, 0, 188,
+      1, 30733, 0, 2982, 0, 1, 4, 1, 0, 13468, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+    ],
+    "Information": [4.0, 16, "MC20TEST00048", 8, 1.2, 0.0, 1.18, 1.0, 0.0, 1]
+  },
+  "library_values": {
+    "Grid 1 Voltage": 237.1,
+    "Grid 2 Voltage": 234.5,
+    "Grid 3 Voltage": 237.8,
+    "Grid 1 Current": 4.1,
+    "Grid 2 Current": 4.1,
+    "Grid 3 Current": 4.1,
+    "Grid 1 Power": 1018.0,
+    "Grid 2 Power": 992.0,
+    "Grid 3 Power": 970.0,
+    "PV1 Voltage": 174.1,
+    "PV2 Voltage": 174.5,
+    "PV3 Voltage": 0.0,
+    "PV1 Current": 8.8,
+    "PV2 Current": 8.7,
+    "PV3 Current": 0.0,
+    "PV1 Power": 1544.0,
+    "PV2 Power": 1531.0,
+    "PV3 Power": 0.0,
+    "Grid 1 Frequency": 49.98,
+    "Grid 2 Frequency": 49.99,
+    "Grid 3 Frequency": 49.94,
+    "Run Mode": "Normal",
+    "Total Yield": 795.7,
+    "Daily Yield": 20.0,
+    "Feed-in Power": 2707.0,
+    "Total Feed-in Energy": 657.24,
+    "Total Consumption": 307.33
+  }
+}

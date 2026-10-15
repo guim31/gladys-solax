@@ -35,6 +35,7 @@ import {
 import { TEXT, perLanguage } from './i18n.js';
 import { createIssueLog } from './issues.js';
 import { CloudError, cloudPeriodMs, createCloudClient } from './solax/cloud.js';
+import { platformIdOf } from './solax/identity.js';
 import { DongleError, createLocalClient } from './solax/local.js';
 import { AUTO_MODEL, UnsupportedModelError, decodeReading, findModel } from './solax/models.js';
 
@@ -49,7 +50,9 @@ export const CLOUD_STALE_MS = 20 * 60 * 1000;
 // Consecutive refusals of a known variant before the dongle is probed again
 // (a firmware update changes what it answers).
 const REDETECT_AFTER = 3;
-const STORE_VERSION = 1;
+// 2: no registration number in the file any more (keys and serials are
+// fingerprints); a version-1 file is dropped and rebuilt by the next reads.
+const STORE_VERSION = 2;
 
 /** The last characters of a serial, enough to tell inverters apart in a log. */
 export const tail = (serial) => `…${String(serial).slice(-4)}`;
@@ -323,7 +326,8 @@ export class SolaxHub {
           modelKey: model.key,
           modelName: model.name,
           serial:
-            response.inverterSerial ?? response.serial ?? source.host.replace(/[^A-Za-z0-9]/g, ''),
+            platformIdOf(response.inverterSerial, response.serial, [source.password]) ??
+            source.host.replace(/[^A-Za-z0-9]/g, ''),
           ratedPowerKw: response.ratedPowerKw,
           firmware: response.firmware,
         });
@@ -348,7 +352,7 @@ export class SolaxHub {
     const label = sourceLabel(source);
     try {
       const result = await this.cloud.read(this.config.cloudToken, source.serial);
-      const serial = result.inverterSerial ?? source.serial;
+      const serial = platformIdOf(result.inverterSerial, source.serial);
       const known = this.records.get(source.id);
       const record = this.remember(source, {
         serial,

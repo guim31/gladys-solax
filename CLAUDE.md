@@ -255,6 +255,16 @@ essais) puis gardée dans `/data` ; trois refus de suite relancent la détection
 possibles. Le mot de passe local est le numéro d'enregistrement de la clé, c'est-à-dire son `sn` :
 **ne jamais journaliser un `sn` en entier** (`tail()` du hub : 4 derniers caractères).
 
+**Identifiants sans secret** (correctif après la 1.0.1, demande de l'orchestrateur). L'`external_id`
+d'un onduleur est son numéro de série quand il est connu ; sinon `reg-` + 12 premiers caractères
+hexadécimaux de `sha256('solax:' + numéro d'enregistrement)` (`src/solax/identity.js`), le même en
+local et par le cloud. Jamais le numéro d'enregistrement : c'est le mot de passe de la clé et le `sn`
+du cloud, et un identifiant s'affiche dans Gladys, part dans les sauvegardes, journaux et exports.
+Un « numéro de série » égal au `sn` ou à un mot de passe configuré est traité comme absent. Les
+sources cloud sont rangées dans `/data` sous `cloud:reg-…` (`STORE_VERSION` 2 : un fichier 1.0.x est
+jeté et reconstruit). `test/secrets.test.js` échoue si un numéro d'enregistrement de la config
+apparaît dans un appareil publié, un état, un statut, le widget, un journal ou `/data`.
+
 **Modèles.** `type` + longueur de `Data` → un décodeur de `src/solax/models.js`, portage de
 `squishykid/solax` (MIT). `test/models.test.js` compare chaque valeur à celles que la bibliothèque
 décode sur les mêmes échantillons : modifier un index exige de faire passer ce test, pas de le

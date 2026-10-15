@@ -1,8 +1,10 @@
 // -----------------------------------------------------------------------------
 // One Gladys device per inverter, and the states of a reading.
 //
-// External ids: `inverter:<serial>`, the inverter serial number (the dongle's
-// registration number when the dongle does not tell the inverter's). The same
+// External ids: `inverter:<serial>`, the inverter serial number, or a
+// `reg-…` fingerprint of the dongle's registration number when the inverter's
+// is not reported — never the registration number itself, which is the
+// dongle's password (src/solax/identity.js). The same
 // id whether the inverter is read locally or through SolaX Cloud: moving from
 // one to the other keeps the device, its history and its scenes.
 //

@@ -5,6 +5,7 @@
 // -----------------------------------------------------------------------------
 
 import { AUTO_MODEL, MODEL_KEYS } from './solax/models.js';
+import { registrationId } from './solax/identity.js';
 import { normalizeHost } from './solax/local.js';
 
 export const LANGUAGES = ['en', 'fr', 'de', 'es'];
@@ -73,7 +74,7 @@ export function normalizeConfig(raw = {}) {
   const cloud = cloudToken
     ? [...new Set(list(config.cloud_serials).map((serial) => serial.toUpperCase()))]
         .filter((serial) => /^[A-Z0-9]{6,20}$/.test(serial))
-        .map((serial) => ({ id: `cloud:${serial}`, serial }))
+        .map((serial) => ({ id: `cloud:${registrationId(serial)}`, serial }))
     : [];
   return {
     local,
@@ -92,7 +93,10 @@ export const isConfigured = (config) => config.local.length > 0 || config.cloud.
 
 /** Every value of the raw config that must never reach a log. */
 export function secretsOf(raw = {}) {
-  return [...list(raw?.passwords), String(raw?.cloud_token ?? '').trim()].filter(
-    (secret) => secret.length >= 4,
-  );
+  // The registration numbers are the dongles' local passwords too.
+  return [
+    ...list(raw?.passwords),
+    ...list(raw?.cloud_serials),
+    String(raw?.cloud_token ?? '').trim(),
+  ].filter((secret) => secret.length >= 4);
 }

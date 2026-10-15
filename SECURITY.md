@@ -46,9 +46,12 @@ What the integration handles:
   only protocol the dongles offer), and HTTPS to `www.solaxcloud.com` when the
   cloud option is configured. The integration only ever sends
   `ReadRealTimeData`: nothing is written to the inverter.
-- When a dongle does not report the inverter serial number, the device
-  external id uses the dongle's registration number, which is then visible in
-  Gladys.
+- **Device ids**: the inverter serial number when it is reported. Otherwise a
+  fingerprint of the dongle's registration number (`reg-` and the first 12 hex
+  characters of `sha256('solax:' + number)`), never the number itself: an
+  external id is shown in Gladys and ends up in backups, logs and exports.
+  Device names show the last four characters at most. In `/data`, the cloud
+  sources are keyed by that fingerprint too.
 
 Out of scope: Gladys Assistant itself (see its
 [security policy](https://github.com/GladysAssistant/Gladys/security/policy)),

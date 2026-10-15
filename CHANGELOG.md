@@ -10,6 +10,15 @@ the notes of the version's GitHub Release.
 
 ## [Unreleased]
 
+### Fixed
+
+- An inverter whose dongle does not report the inverter serial number no
+  longer gets the dongle's registration number (its local password) in its
+  device id: a non-reversible fingerprint of it takes its place, the same
+  locally and through SolaX Cloud. The registration numbers no longer reach
+  `/data` either, and the cloud registration numbers are treated as secrets
+  in the logs.
+
 ## [1.0.1] - 2026-10-15
 
 ### Added

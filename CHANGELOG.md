@@ -10,6 +10,8 @@ the notes of the version's GitHub Release.
 
 ## [Unreleased]
 
+## [1.0.2] - 2026-10-15
+
 ### Fixed
 
 - An inverter whose dongle does not report the inverter serial number no
@@ -38,5 +40,6 @@ the notes of the version's GitHub Release.
 - Texts and documentation in English, French, German and Spanish.
 - `scripts/probe.mjs`, a read-only probe of a dongle or of SolaX Cloud.
 
-[Unreleased]: https://github.com/guim31/gladys-solax/compare/v1.0.1...HEAD
+[Unreleased]: https://github.com/guim31/gladys-solax/compare/v1.0.2...HEAD
+[1.0.2]: https://github.com/guim31/gladys-solax/compare/v1.0.1...v1.0.2
 [1.0.1]: https://github.com/guim31/gladys-solax/releases/tag/v1.0.1

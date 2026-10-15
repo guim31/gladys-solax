@@ -1,6 +1,6 @@
 {
   "name": "gladys-solax",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "private": true,
   "description": "Gladys Assistant integration for SolaX Power inverters, over the local Pocket WiFi dongle (SolaX Cloud as an option).",
   "type": "module",

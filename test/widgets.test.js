@@ -1,77 +1,71 @@
+// -----------------------------------------------------------------------------
+// The `solar_overview` widget: valid for the SDK validator (the core's
+// normalization and content budget), every bound feature exists on the
+// device, and the empty states say what to do.
+// -----------------------------------------------------------------------------
+
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { validateWidgetContent } from '@gladysassistant/integration-sdk';
-import { createFakeGladys } from '@gladysassistant/integration-sdk/testing';
-import { buildDiscoveredDevices } from '../src/devices/index.js';
-import { simulateLanSession } from '../src/devices/plug.js';
-import { DEMO_STATUS_WIDGET, WIDGETS, refreshWidgets } from '../src/widgets.js';
-import { normalizeConfig } from '../src/config.js';
+import { FIXTURES, passwordOf } from './helpers/fakeDongle.js';
+import { createAll, createWorld } from './helpers/world.js';
 
-const gladys = createFakeGladys();
-const config = normalizeConfig();
-const demoStatus = WIDGETS[DEMO_STATUS_WIDGET];
+const dongles = Object.values(FIXTURES)
+  .filter((fixture) => fixture.library_model !== 'X3EVC')
+  .map((fixture) => ({ fixture, password: passwordOf(fixture) }));
 
-// What the SDK passes to onWidgetGet, plus the config index.js adds.
-const getContent = (cfg = config) =>
-  demoStatus.get(gladys, { settings: {}, language: 'en', units: 'metric', config: cfg });
+function boundFeatures(content) {
+  return content.components.flatMap((component) => [
+    ...(component.device_feature ? [component.device_feature] : []),
+    ...(component.device_features ?? []),
+  ]);
+}
 
-test('the demo_status content is rendered exactly as sent', async () => {
-  // [] = nothing the core would drop, truncate or trim to the content budget.
-  assert.deepEqual(validateWidgetContent(await getContent()), []);
-});
-
-test('the degraded plug connection content is valid too', async () => {
-  simulateLanSession(false);
-  try {
-    const content = await getContent();
-    assert.deepEqual(validateWidgetContent(content), []);
-    const status = content.components.find((component) => component.type === 'status');
-    assert.ok(
-      status.items.some((item) => item.color === 'warning'),
-      'degraded shows a warning',
-    );
-  } finally {
-    simulateLanSession(true);
+test('the widget of every model fits the budget and binds existing features', async (t) => {
+  const world = await createWorld({ dongles, cloud: true });
+  t.after(() => world.stop());
+  await createAll(world);
+  for (const device of world.fake.discoveredDevices) {
+    for (const language of ['en', 'fr', 'de', 'es']) {
+      const ack = await world.fake.widgetGet('solar_overview', {
+        settings: { device: device.external_id },
+        language,
+      });
+      assert.equal(ack.success, true);
+      const content = ack.data.content;
+      assert.deepEqual(validateWidgetContent(content), [], `${device.name} (${language})`);
+      const ids = new Set(device.features.map((feature) => feature.external_id));
+      for (const id of boundFeatures(content)) {
+        assert.ok(ids.has(id), `${device.name}: the widget binds ${id}, not a feature`);
+      }
+      assert.ok(content.components.length <= 8);
+    }
   }
 });
 
-test('the live tiles reference features the integration publishes', async () => {
-  const featureIds = new Set(
-    buildDiscoveredDevices(gladys, config).flatMap((device) =>
-      device.features.map((feature) => feature.external_id),
-    ),
-  );
-  const liveTiles = (await getContent()).components.filter((c) => c.device_feature);
-  assert.ok(liveTiles.length > 0, 'the template demonstrates a device-bound tile');
-  for (const tile of liveTiles) {
-    assert.ok(featureIds.has(tile.device_feature), `unknown feature ${tile.device_feature}`);
-  }
+test('a hybrid read through the cloud: tiles, curve, status rows', async (t) => {
+  const world = await createWorld({ cloud: true, config: { language: 'fr' } });
+  t.after(() => world.stop());
+  const ack = await world.fake.widgetGet('solar_overview', { settings: {}, language: 'fr' });
+  const content = ack.data.content;
+  const types = content.components.map((component) => component.type);
+  assert.deepEqual(types, ['text', 'value', 'value', 'value', 'gauge', 'value', 'chart', 'status']);
+  assert.match(content.components[0].text, /SolaX X3-Hybrid G4 .* · Normal · via SolaX Cloud/);
+  const rows = content.components.at(-1).items;
+  assert.equal(rows[0].label, 'Réseau');
+  assert.match(rows[0].value, /^Injection 830 W$/);
+  assert.match(rows[1].value, /^Charge 640 W$/);
+  assert.equal(rows[2].value, 'Normal');
 });
 
-test('every button action of the content is handled and answers a short toast', async () => {
-  const buttons = (await getContent()).components.filter((c) => c.type === 'button' && c.action);
-  assert.ok(buttons.length > 0, 'the template demonstrates a widget action');
-  for (const { action } of buttons) {
-    const message = await demoStatus.action(gladys, {
-      actionKey: action.key,
-      params: action.params ?? {},
-      settings: {},
-      config,
-    });
-    assert.ok(message.en, 'the toast carries at least the mandatory `en` text');
-    assert.ok(message.en.length <= 200, 'toasts are capped at 200 characters');
-  }
-});
-
-test('an unknown widget action fails, so the user sees the error', async () => {
-  await assert.rejects(
-    demoStatus.action(gladys, { actionKey: 'unknown', params: {}, settings: {}, config }),
-    /Unknown widget action/,
-  );
-});
-
-test('refreshWidgets nudges every widget', () => {
-  const fresh = createFakeGladys();
-  refreshWidgets(fresh);
-  assert.deepEqual(fresh.fake.widgetRefreshes, Object.keys(WIDGETS));
+test('the empty states: no inverter chosen, no reading yet', async (t) => {
+  const world = await createWorld({ dongles: dongles.slice(0, 2), config: { language: 'de' } });
+  t.after(() => world.stop());
+  const pick = await world.fake.widgetGet('solar_overview', { settings: {}, language: 'de' });
+  assert.match(pick.data.content.components[0].text, /Wähle in den Einstellungen/);
+  const unknown = await world.fake.widgetGet('solar_overview', {
+    settings: { device: 'ext:test-integration:inverter:NOPE' },
+    language: 'es',
+  });
+  assert.match(unknown.data.content.components[0].text, /Elija un inversor SolaX/);
 });

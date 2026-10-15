@@ -31,16 +31,24 @@ pushing.
 ## Architecture
 
 ```
-index.js                          SDK wiring only: handlers registered before connect()
-src/devices/index.js              registry of the device blueprints + dispatch helpers
-src/devices/<type>.js             one device type per file (buildDevice, onPoll, onSetValue...)
-src/scenes.js                     scene action handlers (manifest `scene_actions`)
-src/widgets.js                    dashboard widget handlers (manifest `widgets`)
+index.js                          SDK wiring only: registerHandlers(gladys), connect()
+src/app.js                        every SDK handler, registered before connect(); waits for the hub
+src/hub.js                        SolaxHub: sources, own polling timers, detection, states, transports,
+                                  scene event, connection status, "Test the connection"
+src/solax/models.js               model table + register decoders (port of squishykid/solax)
+src/solax/local.js                Pocket WiFi / LAN client: request variants, parsing, detection
+src/solax/cloud.js                SolaX Cloud client: getRealtimeInfo, call spacing, daily budget
+src/devices.js                    one Gladys device per inverter, feature specs, states of a reading
+src/widgets.js                    dashboard widget `solar_overview`
+src/scenes.js                     scene action `get_solar_summary` (trigger fired by the hub)
+src/i18n.js                       every text produced by the container, en/fr/de/es
 src/config.js                     DEFAULT_CONFIG (mirrors the manifest defaults) + normalization
-src/weather.js                    example driver (Open-Meteo)
+src/store.js, src/issues.js       /data persistence; failures logged once
+scripts/probe.mjs                 read-only probe of a dongle or of SolaX Cloud (secrets masked)
 gladys-assistant-integration.json manifest: name, config_schema, actions, image...
-docs/en.md, docs/fr.md            user documentation, re-hosted by Gladys (mandatory)
-test/                             node --test, against the SDK's fake Gladys (integration-sdk/testing)
+docs/{en,fr,de,es}.md             user documentation, re-hosted by Gladys, same sections
+test/                             node --test, SDK fake Gladys, fake dongles on 127.0.0.1, fake cloud
+test/fixtures/solax/              real dongle answers from squishykid/solax (MIT), serials invented
 .github/scripts/release.mjs       release helpers (manifest bump, changelog), tested in test/
 ```
 
@@ -70,8 +78,10 @@ test/                             node --test, against the SDK's fake Gladys (in
   `type: "provider"`: 5.1.0). `test/manifest.test.js` ties the manifest to the
   code (defaults, action, scene and widget handlers): change both sides
   together.
-- **User-facing text** is bilingual (English and French): action messages,
-  manifest texts, and `docs/en.md` / `docs/fr.md`, kept in sync.
+- **User-facing text** exists in four languages (English, French, German,
+  Spanish): action messages, manifest texts, feature names, widget content,
+  and `docs/en.md`, `docs/fr.md`, `docs/de.md`, `docs/es.md` with the same
+  sections. `test/i18n.test.js` checks it.
 - **Style.** Prettier formats, ESLint catches mistakes. Comments explain why,
   in English. Tests never touch the network.
 
@@ -233,3 +243,56 @@ long, et sur un « Sie »/« Ihr… » de politesse en allemand. Le store exige 
 - Docs `en`, `fr`, `de`, `es` avec les mêmes sections.
 - Chauffe, ouverture, sécurité : ne rien rendre pilotable « comme un thermostat » ou par un assistant
   vocal quand une erreur serait dangereuse (leçon d'OctoPrint).
+
+## SolaX : propre à cette intégration
+
+**API locale (Pocket WiFi / LAN).** `POST http://<ip>/` avec `optType=ReadRealTimeData&pwd=<numéro
+d'enregistrement de la clé>`, dans le corps ou dans la query selon le firmware ; les firmwares 2.034+
+n'ouvrent le LAN qu'avec `X-Forwarded-For: 5.8.8.8` ; le premier X-Hybrid répond à
+`GET /api/realTimeData.htm`. La variante qui répond est cherchée une fois (`detect`, 1 s entre deux
+essais) puis gardée dans `/data` ; trois refus de suite relancent la détection. Réponse :
+`{ sn, ver, type, Data: [...], Information: [...] }`, clés de casse variable, valeurs vides (`,,`)
+possibles. Le mot de passe local est le numéro d'enregistrement de la clé, c'est-à-dire son `sn` :
+**ne jamais journaliser un `sn` en entier** (`tail()` du hub : 4 derniers caractères).
+
+**Modèles.** `type` + longueur de `Data` → un décodeur de `src/solax/models.js`, portage de
+`squishykid/solax` (MIT). `test/models.test.js` compare chaque valeur à celles que la bibliothèque
+décode sur les mêmes échantillons : modifier un index exige de faire passer ce test, pas de le
+desserrer. Écarts voulus avec la bibliothèque : détection déterministe (types 4 et 14 ambigus
+là-bas), compteurs X1 Smart sur deux registres, X3 EVC refusée (borne, pas onduleur). Le
+`Information[0]` est la puissance nominale (kW) quand il est > 0 ; numéro de série de l'onduleur en
+`Information[3]` (types texte) ou `[2]` (types numériques).
+
+**Signes.** SolaX publie la puissance injectée positive : `gridPower = −feed-in` (convention Gladys,
+import +). Batterie : positive en charge, découpée en `charge-power` / `discharge-power`.
+
+**Énergie (5.2.1).** Le cœur ne dérive la consommation et le coût que des index `energy-sensor`
+(`ENERGY_INDEX_FEATURE_TYPES`) ; un index `energy-production-sensor/index` n'obtient pas de
+`thirty-minutes-production` automatiquement pour une intégration externe (`addEnergyFeatures` ne
+traite que la consommation). Les compteurs réseau sont des `grid-sensor/*-index`, jamais des
+`energy-sensor` : sinon le compteur SolaX serait compté comme un consommateur à côté du Linky.
+Un index n'est jamais publié à 0 ni en baisse (dernier index gardé dans `/data`).
+
+**Nuit.** La plupart des clés s'éteignent avec l'onduleur : appareil « Hors ligne », badge
+`unreachable`, statut de connexion **resté vrai** dès qu'un onduleur est connu (sinon l'écran de
+configuration crierait chaque nuit). Les appareils et leurs fonctionnalités reviennent de `/data`
+au redémarrage ; une fonctionnalité affichée ne disparaît jamais (`mergeCapabilities`).
+
+**SolaX Cloud.** `GET https://www.solaxcloud.com/proxyApp/proxy/api/getRealtimeInfo.do?tokenId=&sn=`
+(numéro d'enregistrement de la clé). Quota : 10 appels/min, 10 000/jour par jeton ; la clé envoie
+toutes les 5 min. Appels espacés de 6,5 s (file unique), période ≥ 5 min, allongée au-delà de
+9 000 appels/jour. Le jeton est dans l'URL : ne jamais journaliser l'URL ; `safeApiMessage` coupe et
+masque le texte d'erreur de l'API. `inverterStatus` = code local + 100. Une donnée plus vieille que
+20 min = hors ligne. Un onduleur lu en local et dans le cloud (même numéro de série) n'est lu qu'en
+local. Le proxy des sessions de code refuse solaxcloud.com : `scripts/probe.mjs --cloud` est à
+lancer d'ailleurs (sans `SOLAX_TOKEN`, il déroule la connexion jusqu'au refus d'un faux jeton).
+
+**Tests.** Faux dongle = vrai serveur HTTP sur 127.0.0.1 (`test/helpers/fakeDongle.js`) : ne jamais
+appeler un script en `execFileSync` pendant qu'il tourne dans le même processus (boucle bloquée,
+faux « timeout »). Le validateur de widget du SDK (`validateWidgetContent`) renvoie un **tableau** de
+problèmes, pas un objet.
+
+**Pièges relevés ici.** Le détecteur de politesse allemande attrape aussi « Sie ist » (« elle
+est ») : reformuler plutôt que de desserrer le test. `DEVICE_FEATURE_TYPES` n'a pas de
+`DEVICE_TEMPERATURE_SENSOR` : une température d'appareil est `device-temperature-sensor` /
+`SENSOR.DECIMAL`.

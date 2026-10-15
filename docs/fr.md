@@ -1,67 +1,152 @@
-# Template de démonstration
+# SolaX Power
 
-Ceci est la documentation utilisateur de l'intégration. Gladys ré-héberge ce
-fichier et affiche un lien **Documentation** permanent vers lui dans l'écran
-de configuration (dans la langue de l'utilisateur, avec l'anglais en repli) —
-c'est au moment de configurer que l'utilisateur en a le plus besoin. Gardez
-les courtes indications d'accueil dans les blocs `section` du `config_schema`
-du manifest ; mettez ici le pas-à-pas détaillé (captures d'écran, dépannage…).
+## Présentation
 
-## Ce que vous obtenez
+Cette intégration lit vos **onduleurs SolaX** (X1, X3, X-Hybrid, Boost, Mini, Smart, Hybrid
+G3/G4, Ultra, MIC PRO, Lite LV, et le Q.VOLT de Qcells, même matériel) **sur votre réseau local**,
+par la clé Wi-Fi ou LAN de l'onduleur (Pocket WiFi). Chaque onduleur devient un appareil Gladys
+avec sa production solaire, ses compteurs d'énergie, l'échange avec le réseau, la batterie des
+hybrides et l'état de l'onduleur. **SolaX Cloud** est une option pour les clés qui ne répondent
+pas en local.
 
-Six appareils de démonstration apparaissent après l'installation : une
-station météo (vraies données Open-Meteo), un interrupteur, une lampe
-variable, une prise connectée avec mesure de puissance, un détecteur de
-mouvement et une caméra.
+Elle est en **lecture seule** : l'intégration n'envoie jamais rien d'autre à l'onduleur qu'une
+demande de ses données en temps réel.
+
+> **Développée sans le matériel : vos retours sont les bienvenus.** Le décodage suit les vraies
+> réponses publiées avec la bibliothèque `solax` qu'utilise Home Assistant, mais il n'a jamais
+> tourné face à un vrai onduleur. Racontez ce que vous voyez sur le forum Gladys ou dans les
+> issues GitHub.
+
+Cette intégration n'est pas affiliée à SolaX Power (not affiliated with SolaX Power).
+
+## Prérequis
+
+- Gladys Assistant **5.1.0** ou plus récent (5.2 pour le suivi d'énergie de l'index de production).
+- Un onduleur SolaX avec sa clé **Pocket WiFi** (V2 ou V3) ou **Pocket LAN**, branchée sur le même
+  réseau que Gladys. Donnez à la clé une **adresse IP fixe** dans votre box.
+- Le **numéro d'enregistrement** de la clé (10 caractères, imprimé sur la clé, visible aussi dans
+  l'application SolaX Cloud) : les firmwares récents s'en servent comme mot de passe de
+  l'interface locale.
+- Pour SolaX Cloud seulement : un compte sur solaxcloud.com et son **jeton d'API** (Service → API
+  sur le nouveau site, Support → Third-party ecology sur l'ancien).
 
 ## Configuration
 
-1. Ouvrez l'onglet **Configuration** de l'intégration.
-2. Renseignez la **latitude** et la **longitude** que la station météo de
-   démonstration doit observer (Paris par défaut), et choisissez votre unité
-   de température. L'**intervalle de rafraîchissement** règle la fréquence
-   de lecture de la station météo et de la puissance de la prise : toutes
-   les 5 minutes par défaut, toutes les minutes au plus.
-3. Enregistrez : les appareils apparaissent dans l'onglet **Découverte**,
-   prêts à être ajoutés.
+Ouvrez **Intégrations → SolaX Power → Configuration** :
 
-Le réglage **Préférer la connexion locale** pilote la prise de
-démonstration : elle affiche en badge le canal réellement utilisé (local ou
-cloud), avec un point orange quand elle fonctionne en mode dégradé (local
-refusé, bascule cloud).
+| Champ                    | Quoi saisir                                                                                                                              |
+| ------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------- |
+| Adresses IP des clés     | Une adresse par onduleur, séparées par des virgules (`192.0.2.10, 192.0.2.11`). Un port peut être précisé (`192.0.2.10:8080`).           |
+| Mots de passe des clés   | Le numéro d'enregistrement de chaque clé, dans l'ordre des adresses. Une seule valeur vaut pour toutes. Vide pour les anciens firmwares. |
+| Modèle d'onduleur        | **Automatique** (conseillé) : le modèle est détecté d'après la réponse de la clé. Ne le forcez que si les mesures semblent fausses.      |
+| Rafraîchissement local   | Toutes les 10, 15, 30 (par défaut) ou 60 secondes.                                                                                       |
+| Jeton d'API SolaX Cloud  | Seulement pour l'option cloud.                                                                                                           |
+| Numéros d'enregistrement | Le numéro d'enregistrement de chaque clé à lire par SolaX Cloud, séparés par des virgules.                                               |
+| Rafraîchissement cloud   | Toutes les 5 (par défaut), 10, 15 ou 30 minutes.                                                                                         |
+| Langue des textes        | Noms des fonctionnalités (figés à l'ajout de l'appareil), état de l'onduleur, textes des scènes. Français par défaut.                    |
 
-## Actions
+Cliquez ensuite sur **Tester la connexion** : pour chaque onduleur, il indique le modèle trouvé,
+ou ce qui ne va pas. Les onduleurs trouvés apparaissent dans l'onglet **Découverte** :
+ajoutez-les à Gladys.
 
-- **Tester le fournisseur météo** — effectue une requête en direct vers
-  Open-Meteo et affiche la température et l'humidité actuelles sous le
-  bouton.
-- **Identifier un appareil** — choisissez un de vos appareils dans la liste
-  et il se signale (la lampe de démonstration « clignote » dans les logs).
+**Quota de SolaX Cloud.** SolaX autorise **10 appels par minute et 10 000 par jour** par jeton, et
+la clé envoie ses données toutes les 5 minutes. L'intégration lit donc chaque onduleur du cloud
+**toutes les 5 minutes au plus**, espace ses appels de 6,5 secondes (jamais plus de 10 par minute,
+quel que soit le nombre d'onduleurs), et allonge la période quand les onduleurs dépasseraient
+9 000 appels par jour. Un onduleur configuré à la fois en local et dans le cloud n'est lu qu'en
+local.
 
-## Scènes
+## Ce que montre chaque appareil
 
-L'intégration ajoute ses propres cartes à l'éditeur de scènes (Gladys 5.1
-ou plus récent), dans la catégorie **Intégrations** :
+Un appareil par onduleur, nommé `SolaX <modèle> <fin du numéro de série>`. Les fonctionnalités
+dépendent de ce que le modèle indique ; une fonctionnalité affichée ne disparaît jamais.
 
-- **Mouvement détecté** (déclencheur) — lance la scène quand un détecteur
-  de démonstration voit bouger quelque chose. Choisissez éventuellement le
-  détecteur et ce qui a bougé (personne, animal) ; laissés vides, toute
-  détection correspond. Les actions suivantes peuvent lire ce qui a bougé
-  avec `{{triggerEvent.data.target}}`.
-- **Identifier un appareil** (action) — fait se signaler l'appareil choisi.
-  Elle indique si l'appareil a pu se signaler, pour que les actions
-  suivantes puissent en dépendre.
+| Fonctionnalité                            | Type Gladys                      | Remarques                                                                  |
+| ----------------------------------------- | -------------------------------- | -------------------------------------------------------------------------- |
+| Puissance PV                              | puissance de production (W)      | Somme des chaînes.                                                         |
+| Puissance PV chaîne 1, 2, 3               | puissance de production (W)      | Quand l'onduleur a plusieurs chaînes.                                      |
+| Production du jour                        | production journalière (kWh)     | Remise à zéro par l'onduleur à minuit.                                     |
+| Production totale                         | index de production (kWh)        | Le compteur cumulé du suivi d'énergie. Jamais publié en baisse.            |
+| Puissance de sortie AC                    | puissance (W)                    | Négative sur un hybride qui charge sa batterie depuis le réseau.           |
+| Réseau (import +, export −)               | puissance réseau (W)             | Demande le compteur SolaX (pince). Positive en soutirage.                  |
+| Index import réseau, index export réseau  | index réseau (kWh)               | Les compteurs du compteur SolaX.                                           |
+| Niveau de batterie                        | niveau de batterie (%)           | Hybrides.                                                                  |
+| Puissance de charge, de décharge batterie | stockage batterie (W)            | L'une des deux vaut 0 à tout instant.                                      |
+| Température batterie                      | température de l'appareil (°C)   | Quand elle est indiquée.                                                   |
+| Index de charge, de décharge batterie     | index du stockage batterie (kWh) | Quand ils sont indiqués.                                                   |
+| Température onduleur                      | température de l'appareil (°C)   | Quand elle est indiquée.                                                   |
+| État de l'onduleur                        | texte                            | Normal, En attente, Défaut, Secours (EPS), Veille... Quand il est indiqué. |
+| En ligne                                  | binaire                          | 0 quand la clé ne répond pas (la nuit pour la plupart des onduleurs).      |
 
-## Tableau de bord
+Le badge de l'appareil indique **local**, **cloud** ou **injoignable**. Les valeurs ne sont
+envoyées à Gladys que quand elles changent, et au moins toutes les 6 heures sinon.
 
-Ajoutez le widget **État de la démo** à un tableau de bord : il affiche en
-direct la température de la station météo et la puissance de la prise du
-bureau, la connexion utilisée par la prise (en orange si dégradée) et la
-position observée. Son bouton **Identifier la lampe** fait se signaler la
-lampe de démonstration.
+## Widget
+
+**Vue solaire** (tableau de bord → ajouter un widget → SolaX Power) : la puissance PV, la
+production du jour, l'échange réseau et la batterie en tuiles en direct, la courbe sur 24 heures
+de la production et du réseau, et une courte liste : injection ou soutirage, charge ou décharge,
+état de l'onduleur, heure de la dernière mesure. Choisissez l'onduleur dans les réglages du widget
+(inutile quand il n'y en a qu'un).
+
+## Déclencheur de scène
+
+**L'état de l'onduleur a changé** : se déclenche quand l'onduleur passe dans un autre état (par
+exemple de Normal à Défaut, ou en Secours (EPS) pendant une coupure). Filtres : l'onduleur, et
+les nouveaux états qui vous intéressent. Variables : `status` (code : `normal`, `fault`,
+`eps`...), `previous_status`, `status_label` (l'état dans la langue de la configuration). Seuls
+les modèles qui indiquent un état peuvent le déclencher (X3 Hybrid G4, X3 Ultra, X3 MIC PRO G2, et
+tout onduleur lu par SolaX Cloud).
+
+## Action de scène
+
+**Obtenir le bilan solaire** : renvoie la dernière mesure d'un onduleur sans interroger la clé de
+nouveau : `summary` (une phrase comme « Solaire : 3,1 kW en ce moment, 12,4 kWh aujourd'hui.
+Réseau : injection 830 W. Batterie : 86 %. »), `online`, `pv_power`, `yield_today`,
+`grid_power`, `battery_level`.
+
+## Exemples de scènes
+
+- **Bilan du soir** : tous les jours à 21 h → Obtenir le bilan solaire → envoyer un message avec
+  `{{summary}}`.
+- **Défaut de l'onduleur** : L'état de l'onduleur a changé, nouvel état Défaut ou Défaut permanent
+  → envoyer une notification « L'onduleur est en défaut : {{status_label}} ».
+- **Utiliser le surplus** : quand Réseau (import +, export −) passe sous −1500 W → allumer la prise
+  du chauffe-eau ; l'éteindre quand elle repasse au-dessus de 0 W.
+- **Coupure de courant** : L'état de l'onduleur a changé, nouvel état Secours (EPS) → éteindre les
+  appareils non essentiels et prévenir la maison.
+
+## Modèles pris en charge
+
+Détectés d'après le `type` qu'indique la clé : X-Hybrid (première génération), X1/X3 G3 (Hybrid,
+Fit, MIC, Air, Boost, Mini), X1-Boost/Mini (types 4, 18, 22), X1-Smart, X1-Hybrid G4, X3-Hybrid G3
+en firmware 2.034, X3-Hybrid G4 et Q.VOLT HYB-G3-3P, X3-MIC PRO G2, X3-Ultra, X1-Lite LV. La borne
+de recharge X3-EVC n'est pas un onduleur : elle est refusée.
 
 ## Dépannage
 
-L'intégration journalise tout ce qu'elle fait : consultez les logs de
-l'intégration depuis l'interface Gladys (ou `docker logs` sur l'hôte) avec
-`LOG_LEVEL=debug` pour le détail complet.
+- **« Aucune réponse »** : vérifiez l'adresse, que Gladys et la clé sont sur le même réseau, et que
+  la clé est alimentée : la plupart des onduleurs coupent la clé la nuit, l'appareil indique alors
+  Hors ligne jusqu'au matin.
+- **« Refus : vérifiez le mot de passe »** : saisissez le numéro d'enregistrement de la clé (pas le
+  numéro de série de l'onduleur).
+- **« Modèle non reconnu »** : ouvrez une issue avec la sortie de
+  `node scripts/probe.mjs <adresse> [numéro d'enregistrement]` (lecture seule ; le numéro
+  d'enregistrement est masqué dans la sortie).
+- **Valeurs fausses** : forcez le modèle dans la configuration, et signalez-le.
+- **Firmware 2.034 et suivants** : certaines clés refusent le réseau local. L'intégration envoie
+  l'en-tête qu'attendent ces firmwares ; si cela échoue encore, utilisez SolaX Cloud.
+- Plus de détails dans les journaux : réglez `LOG_LEVEL=debug` sur l'intégration.
+
+## Limites
+
+- Lecture seule : aucun réglage de l'onduleur (mode de fonctionnement, charge, limite d'injection)
+  n'est modifié, volontairement.
+- Certaines clés ne répondent pas du tout en local : utilisez SolaX Cloud, rafraîchi toutes les
+  5 minutes au mieux.
+- Les valeurs du réseau demandent le compteur SolaX ; sans lui, elles restent à 0.
+- La production par demi-heure du tableau de bord énergie de Gladys est calculée par le cœur à
+  partir de l'index de production ; Gladys 5.2.1 ne la relie pas encore automatiquement pour les
+  intégrations externes.
+- Le sens de certains registres vient de la communauté, pas de SolaX : un modèle absent des
+  échantillons peut mal lire certaines valeurs.

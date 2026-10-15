@@ -1,0 +1,41 @@
+{
+  "_source": "squishykid/solax (MIT) tests/samples/responses.py X1_MINI_RESPONSE_V34_VER3; serial numbers invented",
+  "library_model": "X1MiniV34",
+  "request": {
+    "uri": "/",
+    "method": "POST",
+    "query": null,
+    "data": "optType=ReadRealTimeData",
+    "headers": null
+  },
+  "response": {
+    "sn": "TEST00053",
+    "ver": "3.006.04",
+    "type": 4,
+    "Data": [
+      2348, 7, 144, 966, 0, 16, 0, 154, 0, 4994, 2, 67, 0, 31, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+      0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 34, 0, 25, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 39,
+      0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+      0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+    ],
+    "Information": [1.5, 4, "TEST00054", 8, 2.27, 0.0, 1.43, 0.0, 0.0, 1]
+  },
+  "library_values": {
+    "Network Voltage": 234.8,
+    "Output Current": 0.7,
+    "AC Power": 144.0,
+    "PV1 Voltage": 96.6,
+    "PV2 Voltage": 0.0,
+    "PV1 Current": 1.6,
+    "PV2 Current": 0.0,
+    "PV1 Power": 154.0,
+    "PV2 Power": 0.0,
+    "Grid Frequency": 49.94,
+    "Total Energy": 6.7,
+    "Today's Energy": 3.1,
+    "Total Feed-in Energy": 2.5,
+    "Total Consumption": 0.0,
+    "Power Now": 0.0,
+    "Inverter Temperature": 39.0
+  }
+}

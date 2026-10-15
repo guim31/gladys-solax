@@ -1,0 +1,44 @@
+{
+  "_source": "squishykid/solax (MIT) tests/samples/responses.py X1_BOOST_RESPONSE; serial numbers invented",
+  "library_model": "X1Boost",
+  "request": {
+    "uri": "/",
+    "method": "POST",
+    "query": "optType=ReadRealTimeData",
+    "data": null,
+    "headers": { "X-Forwarded-For": "5.8.8.8" }
+  },
+  "response": {
+    "sn": "TEST00015",
+    "ver": "2.034.06",
+    "type": 4,
+    "Data": [
+      2396, 126, 2956, 4329, 2338, 41, 57, 1777, 1336, 6021, 2, 1215, 0, 137, 0, 0, 0, 0, 0, 0, 0,
+      0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 43, 0, 80, 0, 0, 0, 0, 0, 0, 10, 65535,
+      87, 0, 8184, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+      0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+      0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+      0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+      0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+    ],
+    "Information": [5.0, 4, "TEST00016", 1, 2.21, 0.0, 1.38, 0.0, 0.0, 1]
+  },
+  "library_values": {
+    "AC Voltage": 239.6,
+    "AC Output Current": 12.6,
+    "AC Output Power": 2956,
+    "PV1 Voltage": 432.9,
+    "PV2 Voltage": 233.8,
+    "PV1 Current": 4.1,
+    "PV2 Current": 5.7,
+    "PV1 Power": 1777,
+    "PV2 Power": 1336,
+    "AC Frequency": 60.21,
+    "Total Generated Energy": 121.5,
+    "Today's Generated Energy": 13.7,
+    "Inverter Temperature": 43,
+    "Exported Power": 10,
+    "Total Export Energy": 0.87,
+    "Total Import Energy": 81.84
+  }
+}

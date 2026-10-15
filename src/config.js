@@ -1,45 +1,98 @@
 // -----------------------------------------------------------------------------
-// Integration configuration.
-//
-// The configuration is filled in by the user in Gladys, from the `config_schema`
-// declared in `gladys-assistant-integration.json`. The SDK fetches it for you
-// (`gladys.getConfig()`) and notifies you of every change through
-// `gladys.onConfigUpdated()`.
-//
-// This module only provides defaults and normalizes the received object, so the
-// rest of the code never has to deal with `undefined`.
+// Configuration: defaults (mirroring the manifest `config_schema`) and
+// normalization of what the Gladys form sends (strings, empty values).
+// test/manifest.test.js keeps both sides in sync.
 // -----------------------------------------------------------------------------
 
-// Defaults: they MUST stay consistent with the `default` values declared in the
-// `config_schema` of the manifest.
+import { AUTO_MODEL, MODEL_KEYS } from './solax/models.js';
+import { normalizeHost } from './solax/local.js';
+
+export const LANGUAGES = ['en', 'fr', 'de', 'es'];
+
+// Seconds between two local reads. 30 s is what Home Assistant uses; the
+// Pocket WiFi itself refreshes its data every few seconds.
+export const LOCAL_INTERVALS = ['10', '15', '30', '60'];
+// Minutes between two cloud reads: the dongle uploads every 5 minutes, and
+// the API allows 10 000 calls a day per token.
+export const CLOUD_INTERVALS = ['5', '10', '15', '30'];
+
 export const DEFAULT_CONFIG = {
-  latitude: 48.8566, // Paris
-  longitude: 2.3522,
-  unit: 'celsius', // 'celsius' | 'fahrenheit'
-  // Seconds between two reads of the polled sensors. Gladys polls at most once
-  // a minute: slower intervals are applied by skipping polls (see
-  // createPoller in src/devices/index.js).
-  poll_frequency: 300,
-  // Reserved key (NOT in config_schema): because the manifest declares both
-  // 'local' and 'cloud' in its `transports` field, Gladys shows a standard
-  // "Prefer the local connection" toggle and sends the user's choice here.
-  // Read-only for the integration; defaults to true.
-  GLADYS_PREFER_LOCAL: true,
+  hosts: '',
+  passwords: '',
+  model: AUTO_MODEL,
+  local_interval: '30',
+  cloud_token: '',
+  cloud_serials: '',
+  cloud_interval: '5',
+  language: 'fr',
+};
+
+const list = (value) =>
+  String(value ?? '')
+    .split(/[,;\s]+/)
+    .map((item) => item.trim())
+    .filter(Boolean);
+
+const pick = (value, allowed, fallback) => {
+  const text = value === undefined || value === null ? '' : String(value).trim();
+  return allowed.includes(text) ? text : fallback;
 };
 
 /**
- * Merge the user config with the defaults.
- * @param {Record<string, unknown>} raw config returned by the SDK
+ * @param {object} [raw] the config Gladys sends
+ * @returns {{
+ *   local: Array<{ id: string, host: string, password: string }>,
+ *   invalidHosts: string[],
+ *   cloud: Array<{ id: string, serial: string }>,
+ *   cloudToken: string,
+ *   model: string,
+ *   localIntervalMs: number,
+ *   cloudIntervalMs: number,
+ *   language: string,
+ * }}
  */
 export function normalizeConfig(raw = {}) {
+  const config = { ...DEFAULT_CONFIG, ...(raw ?? {}) };
+  const passwords = list(config.passwords);
+  const local = [];
+  const invalidHosts = [];
+  list(config.hosts).forEach((input, index) => {
+    const host = normalizeHost(input);
+    if (!host) {
+      invalidHosts.push(input);
+      return;
+    }
+    if (local.some((entry) => entry.host === host)) {
+      return;
+    }
+    // One password for every dongle, or one per address in the same order.
+    const password = passwords.length === 1 ? passwords[0] : (passwords[index] ?? '');
+    local.push({ id: `local:${host}`, host, password });
+  });
+  const cloudToken = String(config.cloud_token ?? '').trim();
+  const cloud = cloudToken
+    ? [...new Set(list(config.cloud_serials).map((serial) => serial.toUpperCase()))]
+        .filter((serial) => /^[A-Z0-9]{6,20}$/.test(serial))
+        .map((serial) => ({ id: `cloud:${serial}`, serial }))
+    : [];
   return {
-    ...DEFAULT_CONFIG,
-    ...raw,
-    // Force the types: config may arrive as strings from a form.
-    latitude: Number(raw.latitude ?? DEFAULT_CONFIG.latitude),
-    longitude: Number(raw.longitude ?? DEFAULT_CONFIG.longitude),
-    poll_frequency: Number(raw.poll_frequency ?? DEFAULT_CONFIG.poll_frequency),
-    // The preference is a boolean; anything but an explicit false means true.
-    GLADYS_PREFER_LOCAL: raw.GLADYS_PREFER_LOCAL !== false,
+    local,
+    invalidHosts,
+    cloud,
+    cloudToken,
+    model: pick(config.model, [AUTO_MODEL, ...MODEL_KEYS], AUTO_MODEL),
+    localIntervalMs: Number(pick(config.local_interval, LOCAL_INTERVALS, '30')) * 1000,
+    cloudIntervalMs: Number(pick(config.cloud_interval, CLOUD_INTERVALS, '5')) * 60 * 1000,
+    language: pick(config.language, LANGUAGES, DEFAULT_CONFIG.language),
   };
+}
+
+/** True when there is something to read. */
+export const isConfigured = (config) => config.local.length > 0 || config.cloud.length > 0;
+
+/** Every value of the raw config that must never reach a log. */
+export function secretsOf(raw = {}) {
+  return [...list(raw?.passwords), String(raw?.cloud_token ?? '').trim()].filter(
+    (secret) => secret.length >= 4,
+  );
 }

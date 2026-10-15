@@ -1,8 +1,8 @@
 {
-  "name": "gladys-integration-template-js",
+  "name": "gladys-solax",
   "version": "1.0.0",
   "private": true,
-  "description": "Official starter template to build an external integration for Gladys Assistant with the JavaScript SDK.",
+  "description": "Gladys Assistant integration for SolaX Power inverters, over the local Pocket WiFi dongle (SolaX Cloud as an option).",
   "type": "module",
   "main": "index.js",
   "scripts": {

@@ -1,0 +1,44 @@
+{
+  "_source": "squishykid/solax (MIT) tests/samples/responses.py X1_MINI_RESPONSE_V34; serial numbers invented",
+  "library_model": "X1MiniV34",
+  "request": {
+    "uri": "/",
+    "method": "POST",
+    "query": "optType=ReadRealTimeData",
+    "data": null,
+    "headers": null
+  },
+  "response": {
+    "sn": "TEST00007",
+    "ver": "2.034.06",
+    "type": 4,
+    "Data": [
+      2310, 15, 349, 609, 0, 58, 0, 359, 0, 5000, 2, 3474, 0, 12, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+      0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 39, 0, 2518, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+      41, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+      0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+      0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+      0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+      0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+    ],
+    "Information": [0.7, 4, "TEST00008", 1, 1.19, 0.0, 1.32, 0.0, 0.0, 1]
+  },
+  "library_values": {
+    "Network Voltage": 231.0,
+    "Output Current": 1.5,
+    "AC Power": 349,
+    "PV1 Voltage": 60.9,
+    "PV2 Voltage": 0,
+    "PV1 Current": 5.8,
+    "PV2 Current": 0,
+    "PV1 Power": 359,
+    "PV2 Power": 0,
+    "Grid Frequency": 50.0,
+    "Total Energy": 347.4,
+    "Today's Energy": 1.2,
+    "Total Feed-in Energy": 251.8,
+    "Total Consumption": 0,
+    "Power Now": 0,
+    "Inverter Temperature": 41
+  }
+}

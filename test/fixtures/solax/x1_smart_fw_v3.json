@@ -1,0 +1,41 @@
+{
+  "_source": "squishykid/solax (MIT) tests/samples/responses.py X1_SMART_FW_V3_RESPONSE; serial numbers invented",
+  "library_model": "X1Smart",
+  "request": {
+    "uri": "/",
+    "method": "POST",
+    "query": "optType=ReadRealTimeData",
+    "data": null,
+    "headers": { "X-Forwarded-For": "5.8.8.8" }
+  },
+  "response": {
+    "sn": "TEST00013",
+    "ver": "3.006.04",
+    "type": 8,
+    "Data": [
+      2426, 20, 103, 3470, 1100, 2, 1, 93, 20, 5004, 2, 27207, 2, 353, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+      0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 30, 0, 6537, 0, 0, 0, 0, 0, 0, 63616, 65535,
+      37744, 11, 32984, 16, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+      0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+    ],
+    "Information": [8.0, 8, "TEST00014", 8, 1.16, 1.0, 1.09, 0.0, 0.0, 1]
+  },
+  "library_values": {
+    "Network Voltage": 242.6,
+    "Output Current": 2.0,
+    "AC Power": 103.0,
+    "PV1 Voltage": 347.0,
+    "PV2 Voltage": 110.0,
+    "PV1 Current": 0.2,
+    "PV2 Current": 0.1,
+    "PV1 Power": 93.0,
+    "PV2 Power": 20.0,
+    "Grid Frequency": 50.04,
+    "Total Energy": 2720.7,
+    "Today's Energy": 35.3,
+    "Inverter Temperature": 30.0,
+    "Exported Power": -1920.0,
+    "Total Feed-in Energy": 377.44,
+    "Total Consumption": 329.84
+  }
+}

@@ -10,6 +10,8 @@ the notes of the version's GitHub Release.
 
 ## [Unreleased]
 
+## [1.0.3] - 2026-11-17
+
 ### Changed
 
 - Integration SDK 0.16.1.
@@ -44,6 +46,7 @@ the notes of the version's GitHub Release.
 - Texts and documentation in English, French, German and Spanish.
 - `scripts/probe.mjs`, a read-only probe of a dongle or of SolaX Cloud.
 
-[Unreleased]: https://github.com/guim31/gladys-solax/compare/v1.0.2...HEAD
+[Unreleased]: https://github.com/guim31/gladys-solax/compare/v1.0.3...HEAD
+[1.0.3]: https://github.com/guim31/gladys-solax/compare/v1.0.2...v1.0.3
 [1.0.2]: https://github.com/guim31/gladys-solax/compare/v1.0.1...v1.0.2
 [1.0.1]: https://github.com/guim31/gladys-solax/releases/tag/v1.0.1
